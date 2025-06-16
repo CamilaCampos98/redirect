@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inicializando o Sistema...</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      flex-direction: column;
+    }
+
+    .loader {
+      border: 8px solid #333;
+      border-top: 8px solid #00e0ff;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .ok {
+      color: #00e676;
+    }
+
+    .erro {
+      color: #ff1744;
+    }
+  </style>
+</head>
+<body>
+  <div class="loader"></div>
+  <div class="status" id="status">Verificando aplicações no Render...</div>
+
+  <script>
+    const apiUrl = "https://controlefinanceiroapi-wqu8.onrender.com/swagger/";
+    const frontUrl = "https://portal-controlefinanceiro.onrender.com/";
+
+    const statusEl = document.getElementById("status");
+
+    function atualizarStatus(msg, ok = false) {
+      statusEl.textContent = msg;
+      statusEl.className = "status " + (ok ? "ok" : "erro");
+    }
+
+    async function esperarAplicacoes() {
+      const ping = async (url, nome) => {
+        let tentativas = 0;
+        const maxTentativas = 20;
+
+        while (tentativas < maxTentativas) {
+          try {
+            const response = await fetch(url, { method: "GET" });
+            if (response.ok) {
+              atualizarStatus(`${nome} está online ✔`, true);
+              return true;
+            }
+          } catch (e) {
+            // continua tentando
+          }
+
+          atualizarStatus(`${nome} acordando... (tentativa ${tentativas + 1})`);
+          tentativas++;
+          await new Promise(r => setTimeout(r, 3000)); // espera 3s
+        }
+
+        atualizarStatus(`${nome} falhou em responder 😢`, false);
+        return false;
+      };
+
+      const apiOnline = await ping(apiUrl, "API");
+      const frontOnline = await ping(frontUrl, "Frontend");
+
+      if (apiOnline && frontOnline) {
+        atualizarStatus("Tudo pronto! Redirecionando...");
+        setTimeout(() => {
+          window.location.href = frontUrl;
+        }, 1500);
+      } else {
+        atualizarStatus("Erro ao iniciar aplicações. Tente novamente mais tarde.");
+      }
+    }
+
+    esperarAplicacoes();
+  </script>
+</body>
+</html>
