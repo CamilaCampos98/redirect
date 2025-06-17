@@ -53,7 +53,7 @@
 
   <script>
     const apiUrl = "https://controlefinanceiroapi-wqu8.onrender.com/swagger/";
-    const frontUrl = "https://portal-controlefinanceiro.onrender.com/";
+    const frontUrl = "https://portal-controlefinanceiro.onrender.com";
 
     const statusEl = document.getElementById("status");
 
@@ -63,32 +63,55 @@
     }
 
     async function esperarAplicacoes() {
-      const ping = async (url, nome) => {
+      async function pingApi() {
         let tentativas = 0;
         const maxTentativas = 20;
 
         while (tentativas < maxTentativas) {
           try {
-            const response = await fetch(url, { method: "GET" });
+            const response = await fetch(apiUrl, { method: "GET" });
             if (response.ok) {
-              atualizarStatus(`${nome} está online ✔`, true);
+              atualizarStatus("API está online ✔", true);
               return true;
             }
-          } catch (e) {
-            // continua tentando
-          }
+          } catch {}
 
-          atualizarStatus(`${nome} acordando... (tentativa ${tentativas + 1})`);
+          atualizarStatus(`API acordando... (tentativa ${tentativas + 1})`);
           tentativas++;
-          await new Promise(r => setTimeout(r, 3000)); // espera 3s
+          await new Promise(r => setTimeout(r, 3000));
         }
 
-        atualizarStatus(`${nome} falhou em responder 😢`, false);
+        atualizarStatus("API falhou em responder 😢", false);
         return false;
-      };
+      }
 
-      const apiOnline = await ping(apiUrl, "API");
-      const frontOnline = await ping(frontUrl, "Frontend");
+      async function pingFront() {
+        let tentativas = 0;
+        const maxTentativas = 20;
+
+        while (tentativas < maxTentativas) {
+          try {
+            await new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => resolve();
+              img.onerror = () => reject();
+              img.src = `${frontUrl}/favicon.ico?cache=${Date.now()}`;
+            });
+
+            atualizarStatus("Frontend está online ✔", true);
+            return true;
+          } catch {
+            atualizarStatus(`Frontend acordando... (tentativa ${tentativas + 1})`);
+            tentativas++;
+            await new Promise(r => setTimeout(r, 3000));
+          }
+        }
+
+        atualizarStatus("Frontend falhou em responder 😢", false);
+        return false;
+      }
+
+      const [apiOnline, frontOnline] = await Promise.all([pingApi(), pingFront()]);
 
       if (apiOnline && frontOnline) {
         atualizarStatus("Tudo pronto! Redirecionando...");
