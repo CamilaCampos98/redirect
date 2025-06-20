@@ -1,129 +1,151 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Inicializando o Sistema...</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0a0a0a;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      flex-direction: column;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inicializando o Sistema...</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to right, #0f0f0f, #1a1a1a);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
 
-    .loader {
-      border: 8px solid #333;
-      border-top: 8px solid #00e0ff;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 20px;
-    }
+        .loader {
+            border: 8px solid #333;
+            border-top: 8px solid #00e0ff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
 
-    .status {
-      margin-top: 10px;
-      font-size: 16px;
-      text-align: center;
-    }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
 
-    .ok {
-      color: #00e676;
-    }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
 
-    .erro {
-      color: #ff1744;
-    }
-  </style>
+        .status {
+            font-size: 16px;
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px 20px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .ok {
+            color: #00e676;
+        }
+
+        .erro {
+            color: #ff5252;
+        }
+
+        .aguardando {
+            color: #ffc107;
+        }
+
+        .icon {
+            margin-right: 6px;
+        }
+    </style>
 </head>
 <body>
-  <div class="loader"></div>
-  <div class="status" id="status">Verificando aplicações no Render...</div>
+    <div class="loader"></div>
+    <h1>Inicializando o Sistema...</h1>
+    <div class="status aguardando" id="status">⏳ Verificando aplicações no Render...</div>
 
-  <script>
-    const apiUrl = "https://controlefinanceiroapi-wqu8.onrender.com/swagger/";
-    const frontUrl = "https://portal-controlefinanceiro.onrender.com";
+    <script>
+        const apiUrl = "https://controlefinanceiroapi-wqu8.onrender.com/swagger/";
+        const frontUrl = "https://portal-controlefinanceiro.onrender.com";
 
-    const statusEl = document.getElementById("status");
+        const statusEl = document.getElementById("status");
 
-    function atualizarStatus(msg, ok = false) {
-      statusEl.textContent = msg;
-      statusEl.className = "status " + (ok ? "ok" : "erro");
-    }
+        function atualizarStatus(msg, tipo = "aguardando") {
+            statusEl.textContent = msg;
+            statusEl.className = "status " + tipo;
+        }
 
-    async function esperarAplicacoes() {
-      async function pingApi() {
-        let tentativas = 0;
-        const maxTentativas = 20;
+        async function esperarAplicacoes() {
+            async function pingApi() {
+                let tentativas = 0;
+                const maxTentativas = 20;
 
-        while (tentativas < maxTentativas) {
-          try {
-            const response = await fetch(apiUrl, { method: "GET" });
-            if (response.ok) {
-              atualizarStatus("API está online ✔", true);
-              return true;
+                while (tentativas < maxTentativas) {
+                    try {
+                        const response = await fetch(apiUrl, { method: "GET" });
+                        if (response.ok) {
+                            atualizarStatus("✅ API está online", "ok");
+                            return true;
+                        }
+                    } catch { }
+
+                    tentativas++;
+                    atualizarStatus(`🔄 API acordando... (tentativa ${tentativas})`, "aguardando");
+                    await new Promise(r => setTimeout(r, 3000));
+                }
+
+                atualizarStatus("❌ API falhou em responder 😢", "erro");
+                return false;
             }
-          } catch {}
 
-          atualizarStatus(`API acordando... (tentativa ${tentativas + 1})`);
-          tentativas++;
-          await new Promise(r => setTimeout(r, 3000));
+            async function pingFront() {
+                let tentativas = 0;
+                const maxTentativas = 20;
+
+                while (tentativas < maxTentativas) {
+                    try {
+                        await new Promise((resolve, reject) => {
+                            const img = new Image();
+                            img.onload = () => resolve();
+                            img.onerror = () => reject();
+                            img.src = `${frontUrl}/favicon.ico?cache=${Date.now()}`;
+                        });
+
+                        atualizarStatus("✅ Frontend está online", "ok");
+                        return true;
+                    } catch {
+                        tentativas++;
+                        atualizarStatus(`🔄 Frontend acordando... (tentativa ${tentativas})`, "aguardando");
+                        await new Promise(r => setTimeout(r, 3000));
+                    }
+                }
+
+                atualizarStatus("❌ Frontend falhou em responder 😢", "erro");
+                return false;
+            }
+
+            const [apiOnline, frontOnline] = await Promise.all([pingApi(), pingFront()]);
+
+            if (apiOnline && frontOnline) {
+                atualizarStatus("🚀 Tudo pronto! Redirecionando...", "ok");
+                setTimeout(() => {
+                    window.location.href = frontUrl;
+                }, 1500);
+            } else {
+                atualizarStatus("⚠️ Erro ao iniciar aplicações. Tente novamente mais tarde.", "erro");
+            }
         }
 
-        atualizarStatus("API falhou em responder 😢", false);
-        return false;
-      }
-
-      async function pingFront() {
-        let tentativas = 0;
-        const maxTentativas = 20;
-
-        while (tentativas < maxTentativas) {
-          try {
-            await new Promise((resolve, reject) => {
-              const img = new Image();
-              img.onload = () => resolve();
-              img.onerror = () => reject();
-              img.src = `${frontUrl}/favicon.ico?cache=${Date.now()}`;
-            });
-
-            atualizarStatus("Frontend está online ✔", true);
-            return true;
-          } catch {
-            atualizarStatus(`Frontend acordando... (tentativa ${tentativas + 1})`);
-            tentativas++;
-            await new Promise(r => setTimeout(r, 3000));
-          }
-        }
-
-        atualizarStatus("Frontend falhou em responder 😢", false);
-        return false;
-      }
-
-      const [apiOnline, frontOnline] = await Promise.all([pingApi(), pingFront()]);
-
-      if (apiOnline && frontOnline) {
-        atualizarStatus("Tudo pronto! Redirecionando...");
-        setTimeout(() => {
-          window.location.href = frontUrl;
-        }, 1500);
-      } else {
-        atualizarStatus("Erro ao iniciar aplicações. Tente novamente mais tarde.");
-      }
-    }
-
-    esperarAplicacoes();
-  </script>
+        esperarAplicacoes();
+    </script>
 </body>
 </html>
