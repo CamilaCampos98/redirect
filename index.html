@@ -2,76 +2,85 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Inicializando o Sistema...</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Segoe+UI&display=swap');
+
         body {
             font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(to right, #0f0f0f, #1a1a1a);
-            color: #fff;
+            background-color: #264653; /* cor mais escura da identidade */
+            color: #e0f2f1; /* tom claro para o texto */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            padding: 0 20px;
+            text-align: center;
         }
 
         .loader {
-            border: 8px solid #333;
-            border-top: 8px solid #00e0ff;
+            border: 8px solid #2a9d8f; /* cor clara da identidade */
+            border-top: 8px solid #e0f2f1;
             border-radius: 50%;
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-shadow: 0 0 8px #2a9d8f;
         }
 
         .status {
-            font-size: 16px;
-            text-align: center;
-            margin-top: 10px;
-            padding: 10px 20px;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.05);
+            font-size: 18px;
+            padding: 12px 25px;
+            border-radius: 8px;
+            margin-top: 15px;
+            max-width: 360px;
+            line-height: 1.4;
+            background-color: rgba(42, 157, 143, 0.2);
+            box-shadow: 0 0 10px rgba(42, 157, 143, 0.25);
+            user-select: none;
         }
 
         .ok {
-            color: #00e676;
+            color: #2a9d8f;
+            background-color: rgba(42, 157, 143, 0.4);
+            box-shadow: 0 0 12px #2a9d8f;
         }
 
         .erro {
-            color: #ff5252;
+            color: #f44336;
+            background-color: rgba(244, 67, 54, 0.2);
+            box-shadow: 0 0 10px #f44336;
         }
 
         .aguardando {
             color: #ffc107;
-        }
-
-        .icon {
-            margin-right: 6px;
+            background-color: rgba(255, 193, 7, 0.2);
+            box-shadow: 0 0 10px #ffc107;
         }
     </style>
 </head>
 <body>
-    <div class="loader"></div>
+    <div class="loader" aria-label="Carregando"></div>
     <h1>Inicializando o Sistema...</h1>
-    <div class="status aguardando" id="status">⏳ Verificando aplicações no Render...</div>
+    <div class="status aguardando" id="status" role="status" aria-live="polite">
+        ⏳ Verificando aplicações no Render...
+    </div>
 
     <script>
         const apiUrl = "https://controlefinanceiroapi-wqu8.onrender.com/swagger/";
